@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
 			printf("numero de hijo debe ser mayor o igual a 1");
 			return -1;
 		}
-		
+		//agregando al arreglo las palabras a buscar
 		for(int i=0;i<numero_palabras;i++){
 			palabras[i]=argv[3+i];
 			num_palabras[i]=0;
@@ -81,14 +81,69 @@ int main(int argc, char *argv[]){
       	int residuo=0,tamanobloque;
 		pthread_t *hilos =malloc(num_hilos*sizeof(pthread_t));
 		
-		//validar tamano de bloque y determinando informacion a enviar en cada
+		//validar tamano de bloque y determinando informacion a enviar en cada hilo
+		//se trata de enviar un cantidad de caracteres aproximidamente igual a cada hilo
 		if(totalcaracteres%num_hilos!=0){
 			tamanobloque=totalcaracteres/num_hilos;
 			residuo=totalcaracteres%num_hilos;
 		}
 		tamanobloque=(totalcaracteres/num_hilos)+residuo;
+		//printf("bloque %d \n", tamanobloque);
+		int numlineas[num_hilos];
+		int cantcaracteres[num_hilos];
+		int numcaracter[num_hilos];
+		int finlinea[num_hilos];
+		int i=0,j=0,total=0;
+		while(i<num_hilos ){
+			numlineas[i]=j;
+			numcaracter[i]=total;
+			int num=0;
+			while(num<tamanobloque && j<=totallineas){
+				num+=tam_lineas[j];
+				j++;
+			}
+			cantcaracteres[i]=num;
+			finlinea[i]=j-1;
+			total=total+num;
+			i++;
+		}
 		
+		//imprimiendo la informacion a enviar a cada hilo
+		for(int i=0;i<num_hilos;i++){
+      		printf("hilo : %d numero linea: %d num caracteres: %d  fin linea: %d , cant caracteres: %d \n",
+      		 i+1,numlineas[i],numcaracter[i],finlinea[i], cantcaracteres[i]);
+		}
 		
+		//creando hilos
+		int  hilo;
+		for(hilo=0;hilo<num_hilos;hilo++) {
+			estructura *mi_argumento_estructura = malloc(sizeof(estructura));
+			mi_argumento_estructura->iniciocaracter  = numcaracter[hilo] ;
+			mi_argumento_estructura->inilinea = numlineas[hilo] ;
+			mi_argumento_estructura->finlinea  = finlinea[hilo] ;
+			mi_argumento_estructura->fp  = fp ;
+			mi_argumento_estructura->tam_lineas  = tam_lineas ;
+			status = pthread_create(&hilos[hilo], NULL,contarpalabras, (void *)mi_argumento_estructura);
+			if(status < 0){
+				fprintf(stderr, "Error al crear el hilo : %d\n", hilo);
+				exit(-1);	
+			}
+		}
+
+		//esperando la finalizacion de los hilos
+		for(hilo=0;hilo<num_hilos;hilo++) {
+			int status1 = pthread_join(hilos[hilo], retorno);
+			if(status1 < 0){
+				fprintf(stderr, "Error al esperar por el hilo 1\n");
+				exit(-1);
+			}
+		}
+
+		printf("\n \n RESULTADO FINAL busqueda de palabras:\n");
+		for(int i=0;i<numero_palabras;i++){
+      		printf("palabra  %s: frecuencia final: %d \n",palabras[i],num_palabras[i]);
+      	}
+		pthread_exit(NULL);
 	}else{
 		printf("necesita enviar mas parametros: ./buscar dir_archivo num_hilos palabra1 palabra2..... palabraN.");
 	}
