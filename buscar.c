@@ -79,6 +79,16 @@ void * contarpalabras(void *arg){
   	return (void *)0;
 }
 
+void * Estado(void *arg){
+	while(1){
+		printf("\nActualizacion busqueda de palabras:\n");
+		for(int i=0;i<numero_palabras;i++){
+      		printf("palabra %s: frecuencia actual%d \n",palabras[i],num_palabras[i]);
+      	}
+      	sleep(1);
+     }
+     return(void *)0;
+}
 
 int main(int argc, char *argv[]){
 	if(argc>3){
